@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+  labels:
+    {{- include "singlestore-helm.labels" . | nindent 4 }}
+    app.kubernetes.io/component: operator
+spec:
+  replicas: {{ ternary 1 0 .Values.operator.enabled }}
+  selector:
+    matchLabels:
+      name: {{ include "singlestore-helm.fullname" . }}-operator
+  template:
+    metadata:
+      labels:
+        name: {{ include "singlestore-helm.fullname" . }}-operator
+    spec:
+      serviceAccountName: {{ include "singlestore-helm.fullname" . }}-operator
+      containers:
+        - name: sdb-operator
+          image: {{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}
+          imagePullPolicy: Always
+          args:
+            - "--merge-service-annotations"
+            - "--disable-finalizer"
+            - "--fs-group-id"
+            - "5555"
+            - "--cluster-id"
+            - {{ .Values.clusterName | quote }}
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name

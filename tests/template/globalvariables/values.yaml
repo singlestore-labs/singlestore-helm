@@ -1,0 +1,27 @@
+spec:
+  license: "1234"
+  adminHashedPassword: "hashedsecret"
+  globalVariables:
+    "connect_timeout": "20"
+    "pipelines_max_concurrent": "10"
+  master:
+    storageClass: "local-path"
+    globalVariables:
+      "max_connection_threads": "345"
+  aggregator:
+    count: 2
+    objectMetaOverrides:
+      labels:
+        optional: label
+      annotations:
+        optional: annotation
+    cores: 2
+    memoryMB: 2048
+    storageGB: 128
+    storageClass: "local-path"
+    globalVariables:
+      "max_connection_threads": "123"
+  leaf:
+    storageClass: "local-path"
+    globalVariables:
+      "max_connection_threads": "8192"

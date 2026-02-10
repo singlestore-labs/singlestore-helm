@@ -1,0 +1,47 @@
+apiVersion: memsql.com/v1alpha1
+kind: MemsqlCluster
+metadata:
+  name: sdb-cluster
+spec:
+  licenseSecret:
+    name: singlestore-helm-sdb-cluster-secret
+    key: license
+  adminHashedPasswordSecret:
+    name: singlestore-helm-sdb-cluster-secret
+    key: adminHashedPassword
+  nodeImage:
+    repository: singlestore/node
+    tag: alma-8.9.40-b828fb951c
+  redundancyLevel: 2
+  globalVariables:
+    connect_timeout: "20"
+    pipelines_max_concurrent: "10"
+  masterAggregatorSpec:
+    count: 1
+    cores: 4
+    memoryMB: 16384
+    globalVariables:
+      max_connection_threads: "345"
+    storageGB: 256
+    storageClass: local-path
+  aggregatorSpec:
+    count: 2
+    cores: 2
+    memoryMB: 2048
+    globalVariables:
+      max_connection_threads: "123"
+    storageGB: 128
+    storageClass: local-path
+    objectMetaOverrides:
+      labels:
+            optional: label
+      annotations:
+            optional: annotation
+  leafSpec:
+    count: 1
+    cores: 4
+    memoryMB: 16384
+    globalVariables:
+      max_connection_threads: "8192"
+    storageGB: 1024
+    storageClass: local-path

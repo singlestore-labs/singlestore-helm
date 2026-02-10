@@ -1,0 +1,77 @@
+{{- if .Values.monitoringJob.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-monitoring-secret
+type: Opaque
+stringData:
+  username: {{ required "A valid username for monitoring job is required, when monitoring job is enabled" .Values.monitoringJob.username | quote }}
+  password: {{ required "A valid password for monitoring job user is required, when monitoring job is enabled" .Values.monitoringJob.password | quote }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: toolbox-start-monitoring
+  namespace: {{ .Release.Namespace }}
+spec:
+  template:
+    spec:        
+      serviceAccountName: {{ include "singlestore-helm.fullname" . }}-monitoring
+      initContainers:
+        - name: wait-for-cluster
+          image: mysql:8
+          env:
+            - name: MONITORING_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "singlestore-helm.fullname" . }}-monitoring-secret
+                  key: username
+            - name: MONITORING_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "singlestore-helm.fullname" . }}-monitoring-secret
+                  key: password  
+          command:
+            - /bin/sh
+            - -c
+            - |
+              for i in $(seq 1 60); do
+                mysql -h node-{{ .Values.clusterName }}-master-0.svc-{{ .Values.clusterName }}.{{ .Release.Namespace }}.svc.cluster.local \
+                  -P 3306 \
+                  -u "${MONITORING_USER}" -p"${MONITORING_PASSWORD}" -e "SELECT 1" && exit 0
+                echo "Waiting for master aggregator to be ready... ($i/60)"
+                sleep 10
+              done
+              echo "Master aggregator not ready after 10 minutes, exiting."
+              exit 1
+      containers:
+      - name: toolbox-start-monitoring
+        image: {{ .Values.monitoringJob.image }}
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: MONITORING_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "singlestore-helm.fullname" . }}-monitoring-secret
+                key: username
+          - name: MONITORING_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "singlestore-helm.fullname" . }}-monitoring-secret
+                key: password
+        command:
+          - sdb-admin
+        args:
+          - start-monitoring-kube
+          - --user=$(MONITORING_USER)
+          - --password=$(MONITORING_PASSWORD)
+          - --collect-event-traces
+          - --exporter-port={{ int .Values.monitoringJob.exporterPort }}
+          - --exporter-host={{- include "singlestore-helm.exporterHost" . }}
+          - --yes
+          {{- range .Values.monitoringJob.extraArgs }}
+          - {{ . }}
+          {{- end }}
+      restartPolicy: Never
+  backoffLimit: 2
+{{- end }} 

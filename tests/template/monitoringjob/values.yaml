@@ -1,0 +1,12 @@
+spec:
+  license: "1234"
+  adminHashedPassword: "hashedsecret"
+  master:
+    storageClass: "local-path"
+  leaf:
+    storageClass: "local-path"
+
+monitoringJob:
+  enabled: true
+  username: "user123"
+  password: "password"

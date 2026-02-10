@@ -1,0 +1,123 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints", "persistentvolumeclaims", "events", "configmaps", "secrets"]
+    verbs: ["*"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["*"]
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get"]
+  - apiGroups: ["apps", "extensions"]
+    resources: ["deployments", "daemonsets", "replicasets", "statefulsets", "statefulsets/status"]
+    verbs: ["*"]
+  - apiGroups: ["memsql.com"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["*"]
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "singlestore-helm.fullname" . }}-operator
+roleRef:
+  kind: Role
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+rules:
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes", "nodes"]
+    verbs: ["get", "list", "watch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "singlestore-helm.fullname" . }}-operator
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "singlestore-helm.fullname" . }}-operator
+  apiGroup: rbac.authorization.k8s.io
+{{- if .Values.monitoringJob.enabled }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-monitoring
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - namespaces
+    verbs:
+      - get
+      - list
+  - apiGroups: [ "" ]
+    resources: [ "pods/exec" ]
+    verbs: [ "create" ]
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - memsql.com
+    resources:
+      - '*'
+    verbs:
+      - get
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "singlestore-helm.fullname" . }}-monitoring
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "singlestore-helm.fullname" . }}-monitoring
+roleRef:
+  kind: Role
+  name: {{ include "singlestore-helm.fullname" . }}-monitoring
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

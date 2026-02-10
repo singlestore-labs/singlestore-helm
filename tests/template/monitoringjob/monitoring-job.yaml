@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: singlestore-helm-sdb-cluster-monitoring-secret
+type: Opaque
+stringData:
+  username: "user123"
+  password: "password"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: toolbox-start-monitoring
+  namespace: default
+spec:
+  template:
+    spec:        
+      serviceAccountName: singlestore-helm-sdb-cluster-monitoring
+      initContainers:
+        - name: wait-for-cluster
+          image: mysql:8
+          env:
+            - name: MONITORING_USER
+              valueFrom:
+                secretKeyRef:
+                  name: singlestore-helm-sdb-cluster-monitoring-secret
+                  key: username
+            - name: MONITORING_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: singlestore-helm-sdb-cluster-monitoring-secret
+                  key: password  
+          command:
+            - /bin/sh
+            - -c
+            - |
+              for i in $(seq 1 60); do
+                mysql -h node-sdb-cluster-master-0.svc-sdb-cluster.default.svc.cluster.local \
+                  -P 3306 \
+                  -u "${MONITORING_USER}" -p"${MONITORING_PASSWORD}" -e "SELECT 1" && exit 0
+                echo "Waiting for master aggregator to be ready... ($i/60)"
+                sleep 10
+              done
+              echo "Master aggregator not ready after 10 minutes, exiting."
+              exit 1
+      containers:
+      - name: toolbox-start-monitoring
+        image: singlestore/tools:alma-v1.11.6-1.18.7-f63584d680ce5a7e228f2569db9403a8559aebe5
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: MONITORING_USER
+            valueFrom:
+              secretKeyRef:
+                name: singlestore-helm-sdb-cluster-monitoring-secret
+                key: username
+          - name: MONITORING_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: singlestore-helm-sdb-cluster-monitoring-secret
+                key: password
+        command:
+          - sdb-admin
+        args:
+          - start-monitoring-kube
+          - --user=$(MONITORING_USER)
+          - --password=$(MONITORING_PASSWORD)
+          - --collect-event-traces
+          - --exporter-port=9104
+          - --exporter-host=node-sdb-cluster-master-0.svc-sdb-cluster.default.svc.cluster.local
+          - --yes
+      restartPolicy: Never
+  backoffLimit: 2

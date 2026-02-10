@@ -1,0 +1,72 @@
+apiVersion: memsql.com/v1alpha1
+kind: MemsqlCluster
+metadata:
+  name: {{ .Values.clusterName }}
+spec:
+  licenseSecret:
+    name: {{ include "singlestore-helm.fullname" . }}-secret
+    key: license
+  adminHashedPasswordSecret:
+    name: {{ include "singlestore-helm.fullname" . }}-secret
+    key: adminHashedPassword
+{{- if .Values.spec.rootPasswordSecret }}
+  rootPasswordSecret:
+    name: {{ .Values.spec.rootPasswordSecret.name }}
+    key: {{ .Values.spec.rootPasswordSecret.key }}
+{{- end }}
+  nodeImage:
+    repository: {{ .Values.spec.nodeImage.repository }}
+    tag: {{ .Values.spec.nodeImage.tag }}
+  redundancyLevel: {{ .Values.spec.redundancyLevel }}
+{{- if .Values.spec.globalVariables }}
+  globalVariables:
+    {{- toYaml .Values.spec.globalVariables | nindent 4 }}
+{{- end }}
+{{- if .Values.spec.defaultStorageConfig }}
+  defaultStorageConfig:
+    storageProvider: {{ required "Storage provider must be specified when using unlimited storage" .Values.spec.defaultStorageConfig.storageProvider }}
+    storageURI: {{ required "storageURI must be specified when using unlimited storage" .Values.spec.defaultStorageConfig.storageURI | quote }}
+    storageSecret:
+      name: {{ required "Storage secret name must be specified when using unlimited storage" .Values.spec.defaultStorageConfig.storageSecret.name }}
+      key: {{ required "Storage secret key must be specified when using unlimited storage" .Values.spec.defaultStorageConfig.storageSecret.key }}
+{{- end }}
+{{- if .Values.spec.serviceSpec }}
+  serviceSpec:
+  {{- if .Values.spec.serviceSpec.type }}
+    type: {{ .Values.spec.serviceSpec.type }}
+  {{- end }}
+  {{- if and .Values.spec.serviceSpec.objectMetaOverrides }}
+    objectMetaOverrides:
+    {{- if and .Values.spec.serviceSpec.objectMetaOverrides.labels }}
+      labels: {{- toYaml .Values.spec.serviceSpec.objectMetaOverrides.labels | nindent 8 }}
+    {{- end }}
+    {{- if and .Values.spec.serviceSpec.objectMetaOverrides.annotations }}
+      annotations: {{- toYaml .Values.spec.serviceSpec.objectMetaOverrides.annotations | nindent 8 }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if .Values.spec.schedulingDetails }}
+  schedulingDetails:
+  {{- if .Values.spec.schedulingDetails.master }}
+    master:
+      {{- include "singlestore-helm.renderSchedulingDetailsForRole" .Values.spec.schedulingDetails.master | indent 6 }}
+  {{- end }}
+  {{- if .Values.spec.schedulingDetails.aggregator }}
+    aggregator:
+      {{- include "singlestore-helm.renderSchedulingDetailsForRole" .Values.spec.schedulingDetails.aggregator | indent 6 }}
+  {{- end }}
+  {{- if .Values.spec.schedulingDetails.leaf }}
+  {{- range $i, $e := until (int .Values.spec.redundancyLevel) }}
+    leaf-ag{{ add $i 1 }}:
+      {{- include "singlestore-helm.renderSchedulingDetailsForRole" $.Values.spec.schedulingDetails.leaf | indent 6 }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+  masterAggregatorSpec:
+  {{- include "singlestore-helm.renderNodeSpec" .Values.spec.master | nindent 4 }}
+{{- if .Values.spec.aggregator }}
+  aggregatorSpec:
+  {{- include "singlestore-helm.renderNodeSpec" .Values.spec.aggregator | nindent 4 }}
+{{- end }}
+  leafSpec:
+  {{- include "singlestore-helm.renderNodeSpec" .Values.spec.leaf | nindent 4 }}

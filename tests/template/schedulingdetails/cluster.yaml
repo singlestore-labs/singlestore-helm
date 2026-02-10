@@ -1,0 +1,39 @@
+apiVersion: memsql.com/v1alpha1
+kind: MemsqlCluster
+metadata:
+  name: sdb-cluster
+spec:
+  licenseSecret:
+    name: singlestore-helm-sdb-cluster-secret
+    key: license
+  adminHashedPasswordSecret:
+    name: singlestore-helm-sdb-cluster-secret
+    key: adminHashedPassword
+  rootPasswordSecret:
+    name: root-password-secret-name
+    key: root-password-secret-key
+  nodeImage:
+    repository: singlestore/node
+    tag: alma-8.9.40-b828fb951c
+  redundancyLevel: 2
+  schedulingDetails:
+    master:      
+      nodeSelector:
+        node-type: some-type
+      tolerations:
+        - effect: NoSchedule
+          key: node-type
+          operator: Equal
+          value: some-type
+  masterAggregatorSpec:
+    count: 1
+    cores: 4
+    memoryMB: 16384
+    storageGB: 256
+    storageClass: local-path
+  leafSpec:
+    count: 1
+    cores: 4
+    memoryMB: 16384
+    storageGB: 1024
+    storageClass: local-path

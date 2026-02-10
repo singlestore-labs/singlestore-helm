@@ -1,0 +1,35 @@
+clusterName: sdb-cluster
+
+operator:
+  enabled: true
+  image:
+    repository: singlestore/operator
+    tag: 4.81.0-0d1ea9c8
+
+spec:
+  nodeImage:
+    repository: singlestore/node
+    tag: alma-8.9.40-b828fb951c
+  license: ""
+  adminHashedPassword: ""
+  redundancyLevel: 2
+  master:
+    count: 1
+    cores: 4
+    memoryMB: 16384
+    storageGB: 256
+    storageClass: ""
+  leaf:
+    count: 1
+    cores: 4
+    memoryMB: 16384
+    storageGB: 1024
+    storageClass: ""
+
+sysreqDaemonSet:
+  enabled: false
+
+monitoringJob:
+  enabled: false
+  image: "singlestore/tools:alma-v1.11.6-1.18.7-f63584d680ce5a7e228f2569db9403a8559aebe5"
+  exporterPort: 9104

@@ -1,0 +1,7 @@
+spec:
+  license: "1234"
+  adminHashedPassword: "hashedsecret"
+  master:
+    storageClass: "local-path"
+  leaf:
+    storageClass: "local-path"

@@ -1,0 +1,20 @@
+spec:
+  license: "1234"
+  adminHashedPassword: "hashedsecret"
+  rootPasswordSecret:
+    name: "root-password-secret-name"
+    key: "root-password-secret-key"
+  schedulingDetails:
+    master:
+      nodeSelector:
+        node-type: some-type 
+      tolerations:
+        - key: node-type
+          operator: Equal
+          value: some-type
+          effect: NoSchedule
+
+  master:
+    storageClass: "local-path"
+  leaf:
+    storageClass: "local-path"

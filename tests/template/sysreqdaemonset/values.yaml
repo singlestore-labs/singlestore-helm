@@ -1,0 +1,17 @@
+spec:
+  license: "1234"
+  adminHashedPassword: "hashedsecret"
+  master:
+    storageClass: "local-path"
+  leaf:
+    storageClass: "local-path"
+
+sysreqDaemonSet:
+  enabled: true
+  nodeSelector:
+    node-kind: dbnodes
+  tolerations:
+    - key: node-kind
+      operator: Equal
+      value: dbnodes
+      effect: NoSchedule
