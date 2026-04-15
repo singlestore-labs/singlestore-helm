@@ -1,4 +1,4 @@
-## singlestore-helm
+# singlestore-helm
 
 A Helm chart for deploying SingleStore (MemSQL) clusters via a Kubernetes operator.
 
@@ -7,7 +7,7 @@ A Helm chart for deploying SingleStore (MemSQL) clusters via a Kubernetes operat
 * Installs a MemsqlCluster CRD  
 * Creates service accounts and RBAC  
 * Deploys the SingleStore Operator and a custom MemsqlCluster resource  
-* All configurations are parameterized via a values.yaml file  
+* All configurations are parameterized via a `values.yaml` file  
 * Manages secrets for the license and a hash of the admin password
 
 ## Prerequisites
@@ -23,10 +23,11 @@ helm install <release-name> ./singlestore
 
 ## Configuration
 
-All values can be overridden in the values.yaml file or via the \--set option on the command line.  
-In any place in the table where is used, this can be substituted with master, aggregator, or leaf.
+All values can be overridden in the `values.yaml` file or via the `--set` option on the command line.  
 
-### Table 1: Configuration Parameters
+Anywhere `role` is used in the following tables, it can be substituted with master, aggregator, or leaf.
+
+### Configuration Parameters
 
 | Parameter | Description | Default |
 | :---- | :---- | :---- |
@@ -43,18 +44,18 @@ In any place in the table where is used, this can be substituted with master, ag
 | `spec.redundancyLevel` | Cluster redundancy level | 2 |
 | `spec.serviceSpec.objectMetaOverrides` | Overrides for service metadata | empty |
 | `spec.serviceSpec.type` | Service type for cluster services | LoadBalancer |
-| `spec.schedulingDetails` | Defines scheduling details per role | empty (Refer to the [Scheduling Parameters](#table-4:-scheduling-parameters) table) |
-| `spec.master` | Specification for master aggregator pods | Refer to the [Role Parameters](#table-2:-role-parameters) table |
+| `spec.schedulingDetails` | Defines scheduling details per role | empty (Refer to the [Scheduling Parameters](#scheduling-parameters) table) |
+| `spec.master` | Specification for master aggregator pods | Refer to the [Role Parameters](#role-parameters) table |
 | `spec.aggregator` | Specification for child aggregator pods | empty |
-| `spec.leaf` | Specification for leaf node pods | Refer to the [Role Parameters](#table-2:-role-parameters) table |
-| `spec.defaultStorageConfig` | Remote storage configuration for unlimited storage | empty (Refer to the [Storage Parameters](#table-3:-storage-parameters) table) |
+| `spec.leaf` | Specification for leaf node pods | Refer to the [Role Parameters](#role-parameters) table |
+| `spec.defaultStorageConfig` | Remote storage configuration for unlimited storage | empty (Refer to the [Storage Parameters](#storage-parameters) table) |
 | `spec.globalVariables` | Cluster-wide global variables | empty |
 | `monitoringJob.enabled` | Enable the monitoring setup job | false |
 | `sysreqDaemonSet.enabled` | Enable DaemonSet for Kubernetes nodes configuration | false |
 
-Nodes of each role (master, aggregator, leaf) must be configured separately using a corresponding entry in the values.yaml file. For each node group, this Helm chart supports configuring the following parameters:
+Nodes of each role (master, aggregator, leaf) must be configured separately using a corresponding entry in the `values.yaml` file. For each node group, this Helm chart supports configuring the following parameters:
 
-### Table 2: Role Parameters
+### Role Parameters
 
 | Parameter | Description | Default |
 | :---- | :---- | :---- |
@@ -69,7 +70,7 @@ Nodes of each role (master, aggregator, leaf) must be configured separately usin
 
 To configure remote storage as unlimited storage, `spec.defaultStorageConfig` accepts following parameters:
 
-### Table 3: Storage Parameters
+### Storage Parameters
 
 | Parameter | Description | Default |
 | :---- | :---- | :---- |
@@ -81,7 +82,7 @@ To configure remote storage as unlimited storage, `spec.defaultStorageConfig` ac
 
 The objectMetaOverrides fields can be specified using the following format:
 
-```
+```yaml
 objectMetaOverrides:
   labels:
     some-label: label-value
@@ -91,7 +92,7 @@ objectMetaOverrides:
 
 Scheduling details are configured per role under the spec.schedulingDetails entry:
 
-### Table 4: Scheduling Parameters
+### Scheduling Parameters
 
 | Parameter | Description | Default |
 | :---- | :---- | :---- |
@@ -128,9 +129,9 @@ To enable the DaemonSet, specify sysreqDaemonSet.enabled: true in the values ove
 
 This Helm chart can optionally deploy a one-time monitoring setup job using the SingleStore Toolbox image. When the monitoring job is enabled, the chart creates a secret to store the monitoring user’s credentials and dedicated service account.
 
-To enable, set monitoringJob.enabled: true and provide the required values in the values.yaml file.
+To enable, set monitoringJob.enabled: true and provide the required values in the `values.yaml` file.
 
-```
+```yaml
 monitoringJob:
   enabled: true
   image: singlestore/tools:alma-v1.11.6-1.17.2-cc87b449d97fd7cde78fdc4621c2aec45cc9a6cb
@@ -138,4 +139,4 @@ monitoringJob:
   password: "<admin-password>"
 ```
 
-This job will use the dedicated ServiceAccount (singlestore-helm-\<clusterName\>-monitoring) which has all required permissions. Refer to the [SingleStore monitoring documentation](https://docs.singlestore.com/docs/monitoring/kubernetes/) for more information.  
+This job will use the dedicated ServiceAccount (`singlestore-helm-<clusterName>-monitoring`) which has all required permissions. Refer to the [SingleStore monitoring documentation](https://docs.singlestore.com/docs/monitoring/kubernetes/) for more information.  
