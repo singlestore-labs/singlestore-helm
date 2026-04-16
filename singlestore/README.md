@@ -53,24 +53,26 @@ Anywhere `role` is used in the following tables, it can be substituted with mast
 | `monitoringJob.enabled` | Enable the monitoring setup job | false |
 | `sysreqDaemonSet.enabled` | Enable DaemonSet for Kubernetes nodes configuration | false |
 
-Nodes of each role (master, aggregator, leaf) must be configured separately using a corresponding entry in the `values.yaml` file. For each node group, this Helm chart supports configuring the following parameters:
-
 ### Role Parameters
+
+Nodes of each role (master, aggregator, leaf) must be configured separately using a corresponding entry in the `values.yaml` file.
+
+For each node group, this Helm chart supports configuring the following parameters:
 
 | Parameter | Description | Default |
 | :---- | :---- | :---- |
 | `spec.<role>.cores` | CPU request | 4 for master aggregator and leaf node |
 | `spec.<role>.coresLimit` | CPU limit | empty (will be expanded to the number of host cores by the operator) |
 | `spec.<role>.memoryMB` | Memory request in megabytes (MB) | 16384 |
-| `spec.<role>.memoryLimitMB` | Memory limit in megabytes (MB) | empty (expanded to memoryMB by the operator) |
+| `spec.<role>.memoryLimitMB` | Memory limit in megabytes (MB) | empty (expanded to `memoryMB` by the operator) |
 | `spec.<role>.globalVariables` | Global variables | empty |
 | `spec.<role>.storageGB` | Amount of storage in gigabytes (GB) | 256 for master aggregator; 1024 for leaf node |
 | `spec.<role>.storageClass` | Storage class | empty (required) |
 | `spec.<role>.objectMetaOverrides` | Metadata overrides | empty |
 
-To configure remote storage as unlimited storage, `spec.defaultStorageConfig` accepts following parameters:
-
 ### Storage Parameters
+
+To configure remote storage as unlimited storage, `spec.defaultStorageConfig` accepts following parameters:
 
 | Parameter | Description | Default |
 | :---- | :---- | :---- |
@@ -80,7 +82,7 @@ To configure remote storage as unlimited storage, `spec.defaultStorageConfig` ac
 | `spec.defaultStorageConfig.storageSecret.name` | Name of the credentials secret | empty (required) |
 | `spec.defaultStorageConfig.storageSecret.key` | Key used in credentials secret | empty (required) |
 
-The objectMetaOverrides fields can be specified using the following format:
+The `objectMetaOverrides` fields can be specified using the following format:
 
 ```yaml
 objectMetaOverrides:
@@ -90,9 +92,9 @@ objectMetaOverrides:
     some-annotations: annotation-value
 ```
 
-Scheduling details are configured per role under the spec.schedulingDetails entry:
-
 ### Scheduling Parameters
+
+Scheduling details are configured per role under the `spec.schedulingDetails` entry:
 
 | Parameter | Description | Default |
 | :---- | :---- | :---- |
@@ -101,7 +103,7 @@ Scheduling details are configured per role under the spec.schedulingDetails entr
 
 ## Secret Management
 
-The Helm chart creates a secret named `singlestore-helm-<clusterName>-secrets` containing the license key and hashed admin password from the `values.yaml` file.
+This Helm chart creates a secret named `singlestore-helm-<clusterName>-secrets` which contains the license key and hashed admin password from the `values.yaml` file.
 
 ## RBAC and Security
 
@@ -123,13 +125,13 @@ helm delete <release-name>
 
 To ensure all Kubernetes nodes meet SingleStore's [system requirements](https://docs.singlestore.com/docs/system-requirements/), this Helm chart includes an optional DaemonSet that configures cluster nodes. The DaemonSet's pods run in a privileged security context.
 
-To enable the DaemonSet, specify sysreqDaemonSet.enabled: true in the values override. If the DaemonSet should only run on a subset of Kubernetes cluster nodes, specify the sysreqDaemonSet.nodeSelector and sysreqDaemonSet.tolerations fields.
+To enable the DaemonSet, specify `sysreqDaemonSet.enabled: true` in the values override. If the DaemonSet should only run on a subset of Kubernetes cluster nodes, specify the `sysreqDaemonSet.nodeSelector` and `sysreqDaemonSet.tolerations` fields.
 
 ## Optional Monitoring Setup
 
 This Helm chart can optionally deploy a one-time monitoring setup job using the SingleStore Toolbox image. When the monitoring job is enabled, the chart creates a secret to store the monitoring user’s credentials and dedicated service account.
 
-To enable, set monitoringJob.enabled: true and provide the required values in the `values.yaml` file.
+To enable, set `monitoringJob.enabled: true` and provide the required values in the `values.yaml` file.
 
 ```yaml
 monitoringJob:
@@ -139,4 +141,6 @@ monitoringJob:
   password: "<admin-password>"
 ```
 
-This job will use the dedicated ServiceAccount (`singlestore-helm-<clusterName>-monitoring`) which has all required permissions. Refer to the [SingleStore monitoring documentation](https://docs.singlestore.com/docs/monitoring/kubernetes/) for more information.  
+This job will use the dedicated ServiceAccount (`singlestore-helm-<clusterName>-monitoring`) which has all required permissions.
+
+Refer to the [SingleStore monitoring documentation](https://docs.singlestore.com/docs/monitoring/kubernetes/) for more information.  
